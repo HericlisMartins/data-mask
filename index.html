@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masked Input Component</title>
+    <style>
+        body {
+            background: grey;
+        }
+
+        @mixin box_shadow_border($thickness, $colour) {
+            border: none;
+            box-shadow: $colour 0 0 0 $thickness inset;
+        }
+
+        .masked_input {
+            position: relative;
+            font-size: 50px;
+            font-family: sans-serif;
+            display: inline-block;
+        }
+
+        .mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            color: silver;
+            font-family: inherit;
+            font-size: inherit;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        input {
+            padding: 0;
+            border: none;
+            margin: 0;
+
+            @include box_shadow_border(2px, black);
+
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+        }
+
+        .copy {
+            color: transparent;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="masked_input_wrapper">
+        <div class="masked_input">
+            <div class="mask" data-mask="DD/MM-YYYY" data-autofill="/-">
+                <span class="copy"></span>
+                <span class="mask_partial"></span>
+            </div>
+            <input type="text" autocomplete="bday">
+        </div>
+    </div>
+
+    <div class="masked_input_wrapper">
+        <div class="masked_input">
+            <div class="mask" data-mask="(+32)12 432 555" data-autofill="(+) ">
+                <span class="copy"></span>
+                <span class="mask_partial"></span>
+            </div>
+            <input type="text">
+        </div>
+    </div>
+    <script>
+        const indexesOf = (string, char) => {
+
+            let match = {};
+            let indexes = [];
+            const regex = new RegExp(`\\${char}`, 'g');
+
+            while (match = regex.exec(string)) {
+                indexes.push(match.index);
+            }
+
+            return indexes;
+        }
+
+        const splice = (string, char, index) => {
+            return `${string.slice(0, index)}${char}${string.slice(index)}`;
+        }
+
+        Array.from(document.querySelectorAll('.masked_input')).forEach(el => {
+            const input = el.querySelector('input');
+            const mask = el.querySelector('.mask');
+            const maskContent = mask.dataset.mask;
+            const autoFillChars = mask.dataset.autofill.split('');
+            const autoFillIndexesArray = autoFillChars.map(char => indexesOf(maskContent, char));
+            const maskPartial = el.querySelector('.mask_partial');
+            const copy = el.querySelector('.copy');
+
+            input.maxLength = maskContent.length;
+
+            const setMask = e => {
+                const value = e?.target?.value || '';
+                const maskDisplay = maskContent.slice(value.length);
+                maskPartial.innerHTML = maskDisplay;
+                copy.innerHTML = value;
+            }
+
+            setMask();
+
+            input.addEventListener('input', setMask);
+
+            const autofill = e => {
+                const thisInput = e?.target || input;
+                const value = thisInput.value;
+                let autofilledValue = value;
+                let spliceBuffer = 0;
+                autoFillIndexesArray.forEach((indexes, i) => {
+                    const char = autoFillChars[i];
+                    const relevantIndexes = indexes.filter(index => index + 1 <= value.length);
+                    relevantIndexes.forEach(index => {
+                        if (autofilledValue.charAt(index) !== char) {
+                            autofilledValue = splice(autofilledValue, char, index + spliceBuffer);
+                            spliceBuffer++;
+                        }
+                    });
+                });
+                if (autofilledValue !== value) {
+                    thisInput.value = autofilledValue;
+                }
+            }
+
+            input.addEventListener('input', autofill);
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        label {
+            margin-bottom: 8px;
+        }
+
+        input {
+            padding: 8px;
+            margin-bottom: 16px;
+        }
+
+        .error {
+            color: red;
+            margin-top: 5px;
+        }
+    </style>
+    <title>Date and Phone Input Masking</title>
+</head>
+
+<body>
+
+    <label for="dob">Date of Birth:</label>
+    <input type="text" id="dob" placeholder="DD/MM/YYYY" maxlength="10">
+    <div id="dobError" class="error"></div>
+
+    <label for="phone">Phone Number:</label>
+    <input type="text" id="phone" placeholder="+00 000 000" maxlength="15">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Date of Birth Mask and Validation
+            const dobInput = document.getElementById('dob');
+            const dobError = document.getElementById('dobError');
+
+            dobInput.addEventListener('input', function () {
+                let value = this.value.replace(/\D/g, '');
+                if (value.length > 4) {
+                    value = `${value.slice(0, 2)}/${value.slice(2, 4)}/${value.slice(4, 8)}`;
+                } else if (value.length > 2) {
+                    value = `${value.slice(0, 2)}/${value.slice(2)}`;
+                }
+                this.value = value;
+
+                // Validate Date
+                const isValidDate = validateDate(value);
+                dobError.textContent = isValidDate ? '' : 'Invalid date';
+            });
+
+            // Phone Number Mask
+            const phoneInput = document.getElementById('phone');
+            phoneInput.addEventListener('input', function () {
+                let value = this.value.replace(/\D/g, '');
+                if (value.length > 2) {
+                    value = `+${value.slice(0, 2)} ${value.slice(2, 5)} ${value.slice(5, 8)} ${value.slice(8)}`;
+                } else if (value.length > 0) {
+                    value = `+${value}`;
+                }
+                this.value = value;
+            });
+
+            // Date Validation Function
+            function validateDate(dateString) {
+                const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+                if (!regex.test(dateString)) return false;
+
+                const parts = dateString.split('/');
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10);
+                const year = parseInt(parts[2], 10);
+
+                if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+
+                // Simple validation for month and day
+                if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+
+                return true;
+            }
+        });
+    </script>
+
+</body>
+
+</html>
